@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+      - "release-*"
+
+env:
+  GO_VERSION: "1.20.x"
+  WORKDIR: src/github.com/containers/otelttrpc
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  #
+  # Project checks
+  #
+  project:
+    name: Project Checks
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - uses: actions/checkout@v3
+        with:
+          path: ${{ env.WORKDIR }}
+          fetch-depth: 25
+
+      - uses: containerd/project-checks@v1.1.0
+        with:
+          working-directory: ${{ env.WORKDIR }}
+
+  #
+  # Linters
+  #
+  linters:
+    name: Linters
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.WORKDIR }}
+
+      - name: Setup golang toolchain
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.55
+          args: --timeout=10m
+          skip-cache: true
+          working-directory: ${{ env.WORKDIR }}
+
+      - name: Show golangci-lint errors
+        run: make lint
+        working-directory: ${{ env.WORKIR }}
+        if: ${{ failure() }}
+
+  #
+  # Tests and other checks
+  #
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    name: Tests and other checks
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.WORKDIR }}
+
+      - name: Setup golang toolchain
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Verify go modules
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          make verify-vendor
+
+      - name: Run tests
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          make test
+
+      - name: Test build examples
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          cd example
+          make
+
+      - name: Coverage
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          make coverage TESTFLAGS_RACE=-race
