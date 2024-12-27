@@ -127,18 +127,15 @@ func TestClientCallServerConcurrent(t *testing.T) {
 	var mu sync.Mutex
 
 	for _, testClient := range testClients {
-		// capture range variable
-		// TODO: we can remove this once we upgrade golang to >= 1.22
-		testClient := testClient
 		wg.Add(1)
-		go func() {
+		go func(tc *testingClient) {
 			defer wg.Done()
-			if _, err := testClient.Test(ctx, payload); err != nil {
+			if _, err := tc.Test(ctx, payload); err != nil {
 				mu.Lock()
 				defer mu.Unlock()
 				errs = append(errs, err)
 			}
-		}()
+		}(testClient)
 	}
 
 	wg.Wait()
