@@ -1,6 +1,7 @@
 module github.com/containerd/otelttrpc/example
 
 go 1.21
+toolchain go1.24.1
 
 require (
 	github.com/containerd/otelttrpc v0.0.0-20240305015340-ea5083fda723
@@ -9,7 +10,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.29.0
 	go.opentelemetry.io/otel/sdk v1.29.0
 	go.opentelemetry.io/otel/trace v1.29.0
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
