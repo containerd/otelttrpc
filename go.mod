@@ -1,6 +1,6 @@
 module github.com/containerd/otelttrpc
 
-go 1.21
+go 1.22
 
 require (
 	github.com/containerd/ttrpc v1.2.7
@@ -10,7 +10,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.29.0
 	go.opentelemetry.io/otel/trace v1.29.0
 	google.golang.org/grpc v1.57.1
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/protobuf v1.36.7
 )
 
 require (
