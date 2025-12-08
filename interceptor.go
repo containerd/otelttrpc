@@ -42,7 +42,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 	grpc_codes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -202,20 +202,15 @@ func peerAttr(addr string) []attribute.KeyValue {
 		return []attribute.KeyValue(nil)
 	}
 
-	var attr []attribute.KeyValue
-	if ip := net.ParseIP(host); ip != nil {
-		attr = []attribute.KeyValue{
-			semconv.NetSockPeerAddr(host),
-			semconv.NetSockPeerPort(port),
-		}
-	} else {
-		attr = []attribute.KeyValue{
-			semconv.NetPeerName(host),
-			semconv.NetPeerPort(port),
-		}
+	return []attribute.KeyValue{
+		// NOTE(thaJeztah): strictly, we should use NetworkPeerAddress for IP-addresses,
+		// and either "semconv.ClientAddress" + "semconv.ClientPort"  / "semconv.ServerAddress" + "semconv.ServerPort"
+		// for hostnames. However, this code is generic and doesn't distinguish "client" vs "server".
+		//
+		// See https://opentelemetry.io/docs/specs/semconv/general/attributes/
+		semconv.NetworkPeerAddress(host),
+		semconv.NetworkPeerPort(port),
 	}
-
-	return attr
 }
 
 // peerFromCtx returns a peer address from a context, if one exists.
